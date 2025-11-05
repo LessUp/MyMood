@@ -74,6 +74,27 @@ Page({
     const ymValue = n.year + '-' + dateUtil.pad(n.month)
     this.setData({ year: n.year, month: n.month, monthLabel: dateUtil.monthLabel(n.year, n.month), days, ymValue })
   },
+  onMonthPicked(e) {
+    const value = e && e.detail && e.detail.value ? e.detail.value : ''
+    if (!value) return
+    const parts = value.split('-')
+    if (parts.length < 2) return
+    const year = parseInt(parts[0], 10)
+    const month = parseInt(parts[1], 10)
+    if (!year || !month) return
+    const entries = storage.getAllEntries()
+    const days = this.buildDays(year, month, entries, this.data.weekStart)
+    const update = {
+      year,
+      month,
+      monthLabel: dateUtil.monthLabel(year, month),
+      ymValue: year + '-' + dateUtil.pad(month),
+      days
+    }
+    if (this.data.selectedDateKey) update.selectedDateKey = ''
+    if (this.data.pickerVisible) update.pickerVisible = false
+    this.setData(update)
+  },
   onTodayTap() {
     const now = new Date()
     const year = now.getFullYear()
