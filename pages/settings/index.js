@@ -148,8 +148,18 @@ Page({
         wx.showToast({ title: '数据需为对象映射', icon: 'none' })
         return
       }
+      const records = {}
       for (const key in obj) {
-        const item = obj[key]
+        if (!Object.prototype.hasOwnProperty.call(obj, key)) continue
+        if (typeof key === 'string' && key.startsWith('__')) continue
+        records[key] = obj[key]
+      }
+      if (!Object.keys(records).length) {
+        wx.showToast({ title: '未检测到有效记录', icon: 'none' })
+        return
+      }
+      for (const key in records) {
+        const item = records[key]
         if (!item || typeof item !== 'object' || Array.isArray(item)) {
           wx.showToast({ title: `记录 ${key} 格式错误`, icon: 'none' })
           return
@@ -178,7 +188,7 @@ Page({
         }
       }
 
-      const diff = storage.getMergeDiff(obj)
+      const diff = storage.getMergeDiff(records)
       const { added = 0, updated = 0, deleted = 0 } = diff || {}
       if (!added && !updated && !deleted) {
         wx.showToast({ title: '没有可导入的更新', icon: 'none' })
@@ -190,7 +200,7 @@ Page({
         content: `新增 ${added} 条，更新 ${updated} 条，删除 ${deleted} 条。是否继续？`,
         success: (res) => {
           if (res.confirm) {
-            const r = storage.mergeEntries(obj)
+            const r = storage.mergeEntries(records)
             wx.showToast({ title: '导入完成', icon: 'success' })
             this.setData({ importText: '', syncStatus: `导入完成：新增 ${added}，更新 ${updated}，删除 ${deleted}` })
             if (r && typeof r.updated === 'number' && r.updated !== (updated + deleted)) {

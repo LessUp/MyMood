@@ -130,6 +130,7 @@ function getMergeDiff(entries) {
   const res = { added: 0, updated: 0, deleted: 0 }
   if (!entries || typeof entries !== 'object') return res
   for (const k in entries) {
+    if (typeof k === 'string' && k.startsWith('__')) continue
     const incoming = entries[k]
     if (!incoming || typeof incoming !== 'object') continue
     const mood = incoming.mood || ''
@@ -153,6 +154,7 @@ function mergeEntries(entries) {
   const m = getAllEntries()
   let updated = 0
   for (const k in entries) {
+    if (typeof k === 'string' && k.startsWith('__')) continue
     const e = entries[k]
     if (!e || typeof e !== 'object') continue
     const mood = e.mood || ''
