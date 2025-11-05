@@ -44,6 +44,19 @@ Page({
     } catch(e) {}
     if (this.data.year && this.data.month) this.refresh()
   },
+  applyMonthChange(year, month, extra = {}) {
+    if (!year || !month) return
+    const entries = storage.getAllEntries()
+    const days = this.buildDays(year, month, entries, this.data.weekStart)
+    const update = Object.assign({
+      year,
+      month,
+      monthLabel: dateUtil.monthLabel(year, month),
+      ymValue: year + '-' + dateUtil.pad(month),
+      days
+    }, extra)
+    this.setData(update)
+  },
   buildDays(year, month, entries, weekStart) {
     const base = dateUtil.buildMonthGrid(year, month, weekStart)
     for (let i = 0; i < base.length; i++) {
@@ -62,17 +75,11 @@ Page({
   },
   onPrevMonth() {
     const p = dateUtil.prevMonth(this.data.year, this.data.month)
-    const entries = storage.getAllEntries()
-    const days = this.buildDays(p.year, p.month, entries, this.data.weekStart)
-    const ymValue = p.year + '-' + dateUtil.pad(p.month)
-    this.setData({ year: p.year, month: p.month, monthLabel: dateUtil.monthLabel(p.year, p.month), days, ymValue })
+    this.applyMonthChange(p.year, p.month)
   },
   onNextMonth() {
     const n = dateUtil.nextMonth(this.data.year, this.data.month)
-    const entries = storage.getAllEntries()
-    const days = this.buildDays(n.year, n.month, entries, this.data.weekStart)
-    const ymValue = n.year + '-' + dateUtil.pad(n.month)
-    this.setData({ year: n.year, month: n.month, monthLabel: dateUtil.monthLabel(n.year, n.month), days, ymValue })
+    this.applyMonthChange(n.year, n.month)
   },
   onMonthPicked(e) {
     const value = e && e.detail && e.detail.value ? e.detail.value : ''
@@ -82,18 +89,10 @@ Page({
     const year = parseInt(parts[0], 10)
     const month = parseInt(parts[1], 10)
     if (!year || !month) return
-    const entries = storage.getAllEntries()
-    const days = this.buildDays(year, month, entries, this.data.weekStart)
-    const update = {
-      year,
-      month,
-      monthLabel: dateUtil.monthLabel(year, month),
-      ymValue: year + '-' + dateUtil.pad(month),
-      days
-    }
-    if (this.data.selectedDateKey) update.selectedDateKey = ''
-    if (this.data.pickerVisible) update.pickerVisible = false
-    this.setData(update)
+    this.applyMonthChange(year, month, {
+      selectedDateKey: '',
+      pickerVisible: false
+    })
   },
   onTodayTap() {
     const now = new Date()
@@ -101,10 +100,10 @@ Page({
     const month = now.getMonth() + 1
     const day = now.getDate()
     const key = dateUtil.formatDateKey(year, month, day)
-    const entries = storage.getAllEntries()
-    const days = this.buildDays(year, month, entries, this.data.weekStart)
-    const ymValue = year + '-' + dateUtil.pad(month)
-    this.setData({ year, month, monthLabel: dateUtil.monthLabel(year, month), days, ymValue, pickerVisible: true, selectedDateKey: key })
+    this.applyMonthChange(year, month, {
+      pickerVisible: true,
+      selectedDateKey: key
+    })
   },
   onDayTap(e) {
     const key = e.currentTarget.dataset.datekey
@@ -114,10 +113,7 @@ Page({
       const d = new Date(key.replace(/-/g, '/'))
       const year = d.getFullYear()
       const month = d.getMonth() + 1
-      const entries = storage.getAllEntries()
-      const days = this.buildDays(year, month, entries, this.data.weekStart)
-      const ymValue = year + '-' + dateUtil.pad(month)
-      this.setData({ year, month, monthLabel: dateUtil.monthLabel(year, month), days, ymValue })
+      this.applyMonthChange(year, month)
     }
     this.setData({ pickerVisible: true, selectedDateKey: key })
   },
