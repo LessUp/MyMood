@@ -31,6 +31,22 @@
   </view>
 
   <view class="section">
+    <view class="label">{{i18n.withMoodOnly}}</view>
+    <view class="row">
+      <switch checked="{{onlyWithMood}}" bindchange="onWithMoodToggle" aria-label="{{i18n.withMoodOnly}}" />
+      <view class="label-inline">{{onlyWithMood ? i18n.withMoodOnly : ''}}</view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="label">{{i18n.emptyMoodOnly}}</view>
+    <view class="row">
+      <switch checked="{{onlyEmptyMood}}" bindchange="onEmptyMoodToggle" aria-label="{{i18n.emptyMoodOnly}}" />
+      <view class="label-inline">{{onlyEmptyMood ? i18n.emptyMoodOnly : ''}}</view>
+    </view>
+  </view>
+
+  <view class="section">
     <view class="label">{{i18n.sortLabel}}</view>
     <picker mode="selector" range="{{sortOptions}}" range-key="label" value="{{sortIndex}}" bindchange="onSortChange">
       <view class="picker">{{sortOptions.length > 0 ? sortOptions[sortIndex].label : ''}}</view>

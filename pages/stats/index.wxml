@@ -31,8 +31,8 @@
         <view class="hint">{{i18n.echartsHint}}</view>
       </block>
       <block wx:else>
-        <canvas canvas-id="trendCanvas" class="chart"></canvas>
-        <canvas canvas-id="pieCanvas" class="chart"></canvas>
+        <canvas canvas-id="trendCanvas" class="chart" bindtouchstart="onTrendTouchStart" bindtouchmove="onTrendTouchMove" bindtouchend="onTrendTouchEnd"></canvas>
+        <canvas canvas-id="pieCanvas" class="chart" bindtap="onPieTap"></canvas>
         <view class="hint">{{i18n.canvasHint}}</view>
       </block>
     </block>

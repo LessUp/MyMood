@@ -25,12 +25,22 @@ Page({
     emojiOptions: [],
     selectedEmojis: {},
     onlyWithNotes: false,
+    onlyWithMood: false,
+    onlyEmptyMood: false,
     sortOrder: 'desc',
     sortIndex: 0,
     sortOptions: [],
     results: [],
     i18n: {},
     dataLocked: false
+  },
+  onLoad(options) {
+    const opt = options || {}
+    const sel = Object.assign({}, this.data.selectedEmojis)
+    if (opt.mood) {
+      sel[opt.mood] = true
+      this.setData({ selectedEmojis: sel })
+    }
   },
   onShow() {
     this.refreshTexts()
@@ -84,6 +94,12 @@ Page({
   onNoteToggle(e) {
     this.setData({ onlyWithNotes: !!(e && e.detail && e.detail.value) })
   },
+  onWithMoodToggle(e) {
+    this.setData({ onlyWithMood: !!(e && e.detail && e.detail.value) })
+  },
+  onEmptyMoodToggle(e) {
+    this.setData({ onlyEmptyMood: !!(e && e.detail && e.detail.value) })
+  },
   onSortChange(e) {
     const idx = Number(e.detail.value)
     const options = this.data.sortOptions || []
@@ -102,7 +118,7 @@ Page({
       return
     }
     const all = storage.getAllEntries()
-    const { keyword, startDate, endDate, selectedEmojis, onlyWithNotes, sortOrder } = this.data
+    const { keyword, startDate, endDate, selectedEmojis, onlyWithNotes, onlyWithMood, onlyEmptyMood, sortOrder } = this.data
     const hasEmojiFilter = Object.keys(selectedEmojis).some(k => !!selectedEmojis[k])
     const res = []
     const start = startDate ? new Date(startDate.replace(/-/g, '/')).getTime() : 0
@@ -117,6 +133,8 @@ Page({
         if (!e.mood || !selectedEmojis[e.mood]) continue
       }
       if (onlyWithNotes && !(e.note && e.note.trim())) continue
+      if (onlyWithMood && !e.mood) continue
+      if (onlyEmptyMood && e.mood) continue
       if (kw) {
         const text = ((e.note || '') + (e.mood || '') + k).toLowerCase()
         if (text.indexOf(kw) === -1) continue

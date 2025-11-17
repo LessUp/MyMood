@@ -249,7 +249,11 @@ Page({
       grid: { left: 32, right: 12, top: 16, bottom: 24 },
       xAxis: { type: 'category', data: xs, axisLabel: { show: xs.length > 0, color: this.data.theme === 'dark' ? '#aaa' : '#666' }, axisLine: { lineStyle: { color: this.data.theme === 'dark' ? '#333' : '#ddd' } }, axisTick: { show: false } },
       yAxis: { type: 'value', minInterval: 1, axisLabel: { color: this.data.theme === 'dark' ? '#aaa' : '#666' }, splitLine: { lineStyle: { color: this.data.theme === 'dark' ? '#333' : '#eee' } } },
-      series: [{ type: 'line', data: ys, smooth: true, symbolSize: 4, itemStyle: { color: accent }, lineStyle: { color: accent }, areaStyle: { opacity: 0.12, color: accent } }]
+      series: [{ type: 'line', data: ys, smooth: true, symbolSize: 4, itemStyle: { color: accent }, lineStyle: { color: accent }, areaStyle: { opacity: 0.12, color: accent } }],
+      dataZoom: [
+        { type: 'inside', xAxisIndex: 0, startValue: 0, endValue: xs.length > 0 ? xs.length - 1 : 0 },
+        { type: 'slider', xAxisIndex: 0, startValue: 0, endValue: xs.length > 0 ? xs.length - 1 : 0 }
+      ]
     })
     const buildPieOption = () => ({
       backgroundColor: 'transparent',
@@ -264,6 +268,36 @@ Page({
         const chart = echarts.init(canvas, null, { width, height, devicePixelRatio: dpr })
         chart.setOption(buildTrendOption())
         this._trendChart = chart
+        chart.on('dataZoom', () => {
+          try {
+            const opt = chart.getOption() || {}
+            const dz = (opt.dataZoom && opt.dataZoom[0]) || null
+            const len = (opt.xAxis && opt.xAxis[0] && opt.xAxis[0].data) ? opt.xAxis[0].data.length : (xs.length || 0)
+            let sIdx = 0
+            let eIdx = len > 0 ? len - 1 : 0
+            if (dz) {
+              if (dz.startValue !== undefined && dz.endValue !== undefined) {
+                sIdx = Math.max(0, Math.min(len - 1, Number(dz.startValue)))
+                eIdx = Math.max(0, Math.min(len - 1, Number(dz.endValue)))
+              } else if (dz.start !== undefined && dz.end !== undefined && len > 1) {
+                const toIdx = p => Math.round((Number(p) / 100) * (len - 1))
+                sIdx = toIdx(dz.start)
+                eIdx = toIdx(dz.end)
+              }
+            }
+            const bks = this._trendBuckets || []
+            if (bks.length) {
+              const sBk = bks[Math.max(0, Math.min(bks.length - 1, sIdx))]
+              const eBk = bks[Math.max(0, Math.min(bks.length - 1, eIdx))]
+              const sD = new Date(sBk.start)
+              const eD = new Date(eBk.end)
+              const pad = n => (n < 10 ? '0' + n : '' + n)
+              const sKey = `${sD.getFullYear()}-${pad(sD.getMonth() + 1)}-${pad(sD.getDate())}`
+              const eKey = `${eD.getFullYear()}-${pad(eD.getMonth() + 1)}-${pad(eD.getDate())}`
+              this.setData({ rangeStart: sKey, rangeEnd: eKey })
+            }
+          } catch (e) {}
+        })
         return chart
       })
     }
@@ -272,6 +306,12 @@ Page({
         const chart = echarts.init(canvas, null, { width, height, devicePixelRatio: dpr })
         chart.setOption(buildPieOption())
         this._pieChart = chart
+        chart.on('click', (params) => {
+          if (params && params.seriesType === 'pie' && params.name) {
+            const mood = params.name
+            wx.navigateTo({ url: '/pages/search/index?mood=' + encodeURIComponent(mood) })
+          }
+        })
         return chart
       })
     }
@@ -372,6 +412,7 @@ Page({
     const moodArray = Object.keys(moodTotals).map(mood => ({ mood, count: moodTotals[mood] }))
     moodArray.sort((a, b) => b.count - a.count)
 
+    this._trendBuckets = buckets
     return {
       xs,
       ys,
@@ -389,6 +430,76 @@ Page({
     const { xs, ys, pieMap } = this._latestTrend
     this.drawTrendLine(xs, ys)
     this.drawPieChart(pieMap)
+  },
+  _mapXToBucketIndex(x, width) {
+    const padL = 40, padR = 16
+    const count = (this._trendBuckets || []).length
+    if (count <= 1) return 0
+    const usable = Math.max(1, width - padL - padR)
+    const ratio = Math.max(0, Math.min(1, (x - padL) / usable))
+    return Math.max(0, Math.min(count - 1, Math.round(ratio * (count - 1))))
+  },
+  onTrendTouchStart(e) {
+    const sys = wx.getSystemInfoSync()
+    const W = sys.windowWidth - 32
+    const t = e && e.touches ? e.touches : []
+    if (!t || t.length === 0) return
+    if (t.length === 1) {
+      const x = t[0].x
+      const idx = this._mapXToBucketIndex(x, W)
+      this._touchState = { selecting: true, startIdx: idx, currentIdx: idx }
+    }
+  },
+  onTrendTouchMove(e) {
+    const sys = wx.getSystemInfoSync()
+    const W = sys.windowWidth - 32
+    const t = e && e.touches ? e.touches : []
+    if (!t || !this._touchState) return
+    if (t.length === 1 && this._touchState.selecting) {
+      const x = t[0].x
+      const idx = this._mapXToBucketIndex(x, W)
+      this._touchState.currentIdx = idx
+    }
+  },
+  onTrendTouchEnd() {
+    if (!this._touchState || !this._touchState.selecting) { this._touchState = null; return }
+    const bks = this._trendBuckets || []
+    if (!bks.length) { this._touchState = null; return }
+    const sIdx = Math.max(0, Math.min(bks.length - 1, Math.min(this._touchState.startIdx, this._touchState.currentIdx)))
+    const eIdx = Math.max(0, Math.min(bks.length - 1, Math.max(this._touchState.startIdx, this._touchState.currentIdx)))
+    const sBk = bks[sIdx]
+    const eBk = bks[eIdx]
+    const sD = new Date(sBk.start)
+    const eD = new Date(eBk.end)
+    const pad = n => (n < 10 ? '0' + n : '' + n)
+    const sKey = `${sD.getFullYear()}-${pad(sD.getMonth() + 1)}-${pad(sD.getDate())}`
+    const eKey = `${eD.getFullYear()}-${pad(eD.getMonth() + 1)}-${pad(eD.getDate())}`
+    this.setData({ rangeStart: sKey, rangeEnd: eKey })
+    this.computeStats()
+    this._touchState = null
+  },
+  onPieTap(e) {
+    const p = e && e.detail ? e.detail : (e || {})
+    const x = p.x, y = p.y
+    const sys = wx.getSystemInfoSync()
+    const W = sys.windowWidth - 32
+    const H = 200
+    const cx = W / 2
+    const cy = H / 2
+    const r = Math.min(W, H) / 3
+    const dx = x - cx
+    const dy = y - cy
+    const dist = Math.sqrt(dx * dx + dy * dy)
+    if (dist < r * 0.5 || dist > r) return
+    let ang = Math.atan2(dy, dx)
+    if (ang < -Math.PI / 2) ang += Math.PI * 2
+    const arcs = this._pieArcs || []
+    for (const arc of arcs) {
+      if (ang >= arc.start && ang <= arc.end) {
+        wx.navigateTo({ url: '/pages/search/index?mood=' + encodeURIComponent(arc.mood) })
+        break
+      }
+    }
   },
   drawTrendLine(xs, ys) {
     const ctx = wx.createCanvasContext('trendCanvas', this)
@@ -439,6 +550,7 @@ Page({
     let start = -Math.PI / 2
     const colors = ['#07c160', '#5B8FF9', '#F6BD16', '#E8684A', '#6DC8EC', '#9270CA', '#FF99C3']
     let idx = 0
+    this._pieArcs = []
     for (const mood in map) {
       const val = map[mood]
       const angle = (val / total) * Math.PI * 2
@@ -447,6 +559,7 @@ Page({
       ctx.setFillStyle(colors[idx % colors.length])
       ctx.arc(cx, cy, r, start, start + angle)
       ctx.closePath(); ctx.fill()
+      this._pieArcs.push({ mood, start, end: start + angle })
       start += angle; idx++
     }
     ctx.setFillStyle(bg); ctx.beginPath(); ctx.arc(cx, cy, r * 0.5, 0, Math.PI * 2); ctx.fill()
