@@ -62,7 +62,10 @@
               <text class="count">{{item.countLabel}}</text>
             </view>
             <view class="backup-note">{{item.note}}</view>
-            <button class="primary small" style="background-color: {{accentColor}};" data-id="{{item.id}}" bindtap="onRestoreBackup">{{i18n.restore}}</button>
+            <view class="row">
+              <button class="primary small" style="background-color: {{accentColor}};" data-id="{{item.id}}" bindtap="onRestoreBackup">{{i18n.restore}}</button>
+              <button class="plain small" data-id="{{item.id}}" bindtap="onCreateBackupLink">{{i18n.backupDownload}}</button>
+            </view>
           </view>
         </block>
       </block>

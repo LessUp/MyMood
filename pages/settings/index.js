@@ -431,6 +431,22 @@ Page({
   async onRefreshBackups() {
     await this.loadBackups()
   },
+  async onCreateBackupLink(e) {
+    const id = e.currentTarget.dataset.id
+    if (!id) return
+    try {
+      const r = await sync.createBackupDownload(id)
+      const url = r && r.url ? r.url : ''
+      if (!url) throw new Error('no url')
+      wx.setClipboardData({
+        data: url,
+        success: () => wx.showToast({ title: this.data.i18n.downloadLinkCopied || 'Copied', icon: 'success' }),
+        fail: () => wx.showToast({ title: this.data.i18n.downloadLinkFailed || 'Failed', icon: 'none' })
+      })
+    } catch (err) {
+      wx.showToast({ title: this.data.i18n.downloadLinkFailed || 'Failed', icon: 'none' })
+    }
+  },
   async onRestoreBackup(e) {
     if (storage.isLocked()) {
       wx.showToast({ title: this.data.i18n.unlockFirst, icon: 'none' })

@@ -142,4 +142,29 @@ async function restoreBackup(id) {
   return { diff, mergeRes }
 }
 
-module.exports = { syncAll, createBackup, listBackups, restoreBackup }
+async function createBackupDownload(id) {
+  const ok = cloud.initCloud()
+  if (!ok) throw new Error('cloud not inited')
+  const userId = await cloud.getOpenId()
+  const db = cloud.getDb()
+  const coll = db.collection('mood_backups')
+  const res = await coll.doc(id).get()
+  const item = res && res.data ? res.data : null
+  if (!item || !item.payload) throw new Error('backup not found')
+  const fs = wx.getFileSystemManager()
+  const localPath = `${wx.env.USER_DATA_PATH}/moodflow_backup_${id}.json`
+  fs.writeFileSync(localPath, item.payload, 'utf8')
+  const uploadRes = await wx.cloud.uploadFile({
+    cloudPath: `backups/${userId}/${id}.json`,
+    filePath: localPath
+  })
+  const fileID = uploadRes && uploadRes.fileID ? uploadRes.fileID : ''
+  if (!fileID) throw new Error('upload failed')
+  const urlRes = await wx.cloud.getTempFileURL({ fileList: [fileID] })
+  const list = urlRes && urlRes.fileList ? urlRes.fileList : []
+  const url = list[0] && list[0].tempFileURL ? list[0].tempFileURL : ''
+  if (!url) throw new Error('url failed')
+  return { url, fileID }
+}
+
+module.exports = { syncAll, createBackup, listBackups, restoreBackup, createBackupDownload }
