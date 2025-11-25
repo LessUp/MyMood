@@ -1,0 +1,198 @@
+.container {
+  padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.section {
+  /* We'll keep the class name but alias it to card styles if possible, 
+     but since this is WXSS, I'll just copy the card styles or rely on the global .card class if I updated the WXML.
+     I didn't update the WXML to use .card, so I'll just restyle .section here to match .card from app.wxss */
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 24rpx;
+}
+
+.label {
+  font-size: 30rpx;
+  color: var(--text-main);
+  margin-bottom: 24rpx;
+  font-weight: 600;
+}
+
+.seg {
+  display: flex;
+  background: #f0f0f0;
+  border-radius: var(--radius-md);
+  padding: 6rpx;
+  margin-bottom: 24rpx;
+}
+
+.seg-item {
+  flex: 1;
+  text-align: center;
+  padding: 12rpx 0;
+  border-radius: var(--radius-md);
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.seg-item.on {
+  background: #fff;
+  color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
+  font-weight: 500;
+}
+
+.range {
+  background: #f9f9f9;
+  border-radius: var(--radius-md);
+  padding: 20rpx;
+}
+
+.range-title {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  margin-bottom: 16rpx;
+}
+
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.picker {
+  flex: 1;
+  background: #fff;
+  border-radius: 8rpx;
+  padding: 12rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+
+.range-sep {
+  color: var(--text-secondary);
+}
+
+.button-row {
+  display: flex;
+  gap: 16rpx;
+}
+
+.primary {
+  background: var(--primary-color);
+  color: #fff;
+  border-radius: var(--radius-md);
+  padding: 16rpx 32rpx;
+  font-size: 26rpx;
+  border: none;
+}
+
+.primary.small {
+  align-self: flex-start;
+  padding: 12rpx 24rpx;
+  font-size: 24rpx;
+}
+
+.plain {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 14rpx 30rpx;
+  font-size: 26rpx;
+}
+
+.chart {
+  width: 100%;
+  height: 400rpx;
+  margin-top: 24rpx;
+}
+
+.hint {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+  margin-top: 12rpx;
+  text-align: center;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.summary-item {
+  background: #f9f9f9;
+  padding: 20rpx;
+  border-radius: var(--radius-md);
+  font-size: 26rpx;
+  color: var(--text-main);
+  border-left: 6rpx solid var(--primary-color);
+}
+
+.streak .value {
+  font-size: 48rpx;
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16rpx;
+}
+
+.cell {
+  padding: 20rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f9f9f9;
+  border-radius: var(--radius-md);
+}
+
+.emoji {
+  font-size: 48rpx;
+  margin-bottom: 8rpx;
+}
+
+.count {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+}
+
+/* Dark Mode */
+.theme-dark {
+  --bg-color: #121212;
+  --card-bg: #1e1e1e;
+  --text-main: #e0e0e0;
+  --text-secondary: #888;
+  --border-color: #333;
+  --primary-color: #3ea76a;
+}
+
+.theme-dark .seg {
+  background: #2c2c2c;
+}
+
+.theme-dark .seg-item.on {
+  background: #3ea76a;
+  color: #fff;
+}
+
+.theme-dark .range,
+.theme-dark .picker,
+.theme-dark .summary-item,
+.theme-dark .cell {
+  background: #2c2c2c;
+  border-color: #444;
+}

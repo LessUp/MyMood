@@ -1,0 +1,15 @@
+{
+  "miniprogramRoot": "./",
+  "compileType": "miniprogram",
+  "cloudfunctionRoot": "cloudfunctions/",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "minified": true,
+    "postcss": true
+  },
+  "appid": "",
+  "projectname": "MyMood",
+  "condition": {}
+}

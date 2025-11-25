@@ -1,0 +1,11 @@
+.container { padding: 24rpx; }
+.section { background: #fff; border-radius: 16rpx; padding: 20rpx; margin-bottom: 20rpx; }
+.title { font-size: 36rpx; font-weight: 600; color: #111; margin-bottom: 12rpx; }
+.subtitle { font-size: 30rpx; color: #333; margin: 12rpx 0 6rpx; }
+.p { font-size: 26rpx; color: #555; line-height: 1.6; }
+
+.theme-dark { background-color: #0f0f0f; color: #eee; }
+.theme-dark .section { background: #161616; }
+.theme-dark .title { color: #eee; }
+.theme-dark .subtitle { color: #ddd; }
+.theme-dark .p { color: #bbb; }

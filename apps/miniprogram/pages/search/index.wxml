@@ -1,0 +1,88 @@
+<view class="container {{theme === 'dark' ? 'theme-dark' : 'theme-light'}}" style="--accent-color: {{accentColor}};">
+  <view class="section">
+    <view class="label">{{i18n.keywordLabel}}</view>
+    <input class="input" placeholder="{{i18n.keywordPlaceholder}}" value="{{keyword}}" bindinput="onKeywordInput" />
+  </view>
+
+  <view class="section">
+    <view class="label">{{i18n.dateRangeLabel}}</view>
+    <view class="range-row">
+      <picker mode="date" value="{{startDate}}" bindchange="onStartChange"><view class="picker">{{startDate}}</view></picker>
+      <text class="range-sep">-</text>
+      <picker mode="date" value="{{endDate}}" bindchange="onEndChange"><view class="picker">{{endDate}}</view></picker>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="label">{{i18n.emojiFilterLabel}}</view>
+    <view class="emoji-grid">
+      <block wx:for="{{emojiOptions}}" wx:key="*this">
+        <view class="emoji {{selectedEmojis[item] ? 'on' : ''}}" data-em="{{item}}" bindtap="onEmojiToggle">{{item}}</view>
+      </block>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="label">{{i18n.withNotesOnly}}</view>
+    <view class="row">
+      <switch checked="{{onlyWithNotes}}" bindchange="onNoteToggle" aria-label="{{i18n.withNotesOnly}}" />
+      <view class="label-inline">{{onlyWithNotes ? i18n.withNotesOnly : ''}}</view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="label">{{i18n.withMoodOnly}}</view>
+    <view class="row">
+      <switch checked="{{onlyWithMood}}" bindchange="onWithMoodToggle" aria-label="{{i18n.withMoodOnly}}" />
+      <view class="label-inline">{{onlyWithMood ? i18n.withMoodOnly : ''}}</view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="label">{{i18n.emptyMoodOnly}}</view>
+    <view class="row">
+      <switch checked="{{onlyEmptyMood}}" bindchange="onEmptyMoodToggle" aria-label="{{i18n.emptyMoodOnly}}" />
+      <view class="label-inline">{{onlyEmptyMood ? i18n.emptyMoodOnly : ''}}</view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="label">{{i18n.sortLabel}}</view>
+    <picker mode="selector" range="{{sortOptions}}" range-key="label" value="{{sortIndex}}" bindchange="onSortChange">
+      <view class="picker">{{sortOptions.length > 0 ? sortOptions[sortIndex].label : ''}}</view>
+    </picker>
+  </view>
+
+  <view class="section">
+    <view class="row actions">
+      <button class="primary" style="background-color: {{accentColor}};" bindtap="doSearch">{{i18n.searchButton}}</button>
+      <button class="plain" bindtap="onClearFilters">{{i18n.clearButton}}</button>
+      <button class="plain" bindtap="onExportResults">{{i18n.exportJson}}</button>
+      <button class="plain" bindtap="onExportCsv">{{i18n.exportCsv}}</button>
+    </view>
+  </view>
+
+  <block wx:if="{{dataLocked}}">
+    <view class="section locked">{{i18n.lockedMessage}}</view>
+  </block>
+
+  <block wx:else>
+    <view class="section">
+      <view class="label">{{i18n.resultsLabel}}</view>
+      <block wx:if="{{results.length === 0}}">
+        <view class="empty">{{i18n.emptyText}}</view>
+      </block>
+      <view class="list" wx:else>
+        <block wx:for="{{results}}" wx:key="dateKey">
+          <view class="item" data-datekey="{{item.dateKey}}" bindtap="onItemTap">
+            <view class="left">
+              <view class="dk">{{item.dateKey}}</view>
+              <view class="note">{{item.note}}</view>
+            </view>
+            <view class="right">{{item.mood}}</view>
+          </view>
+        </block>
+      </view>
+    </view>
+  </block>
+</view>

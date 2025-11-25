@@ -1,0 +1,28 @@
+<view class="container {{theme === 'dark' ? 'theme-dark' : 'theme-light'}}">
+  <view class="section">
+    <view class="title">隐私与数据说明</view>
+    <view class="p">本小程序用于个人情绪记录，不采集不必要的个人信息。</view>
+  </view>
+
+  <view class="section">
+    <view class="subtitle">数据存储</view>
+    <view class="p">默认仅保存在本地设备（使用 wx.setStorageSync）。</view>
+    <view class="p">如你在设置中开启云同步，数据将与微信云开发数据库关联到你的 openid。</view>
+  </view>
+
+  <view class="section">
+    <view class="subtitle">数据同步</view>
+    <view class="p">启用云同步后，记录会在本地与云端之间双向合并；冲突以较新的时间戳 ts 为准。</view>
+    <view class="p">你可在设置页随时导出/导入 JSON，或清除本地数据。</view>
+  </view>
+
+  <view class="section">
+    <view class="subtitle">权限与第三方</view>
+    <view class="p">不申请敏感权限；不集成第三方 SDK；云开发仅用于数据存储与登录标识（openid）。</view>
+  </view>
+
+  <view class="section">
+    <view class="subtitle">联系方式</view>
+    <view class="p">如对隐私有疑问或需删除数据，请通过小程序内反馈渠道联系开发者。</view>
+  </view>
+</view>

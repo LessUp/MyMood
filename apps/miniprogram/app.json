@@ -1,0 +1,19 @@
+{
+  "pages": [
+    "pages/calendar/index",
+    "pages/detail/index",
+    "pages/stats/index",
+    "pages/settings/index",
+    "pages/privacy/index",
+    "pages/search/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "心情日历",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black",
+    "backgroundTextStyle": "dark",
+    "backgroundColor": "#f7f7f7"
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2"
+}

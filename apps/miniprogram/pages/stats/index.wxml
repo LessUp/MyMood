@@ -1,0 +1,79 @@
+<view class="container {{theme === 'dark' ? 'theme-dark' : 'theme-light'}}" style="--accent-color: {{accentColor}};">
+  <view class="section charts">
+    <view class="label">{{i18n.trendTitle}}</view>
+    <view class="seg">
+      <view class="seg-item {{granularity === 'day' ? 'on' : ''}}" data-g="day" bindtap="onGranularityTap">{{i18n.dayLabel}}</view>
+      <view class="seg-item {{granularity === 'week' ? 'on' : ''}}" data-g="week" bindtap="onGranularityTap">{{i18n.weekLabel}}</view>
+      <view class="seg-item {{granularity === 'month' ? 'on' : ''}}" data-g="month" bindtap="onGranularityTap">{{i18n.monthLabel}}</view>
+    </view>
+    <view class="range">
+      <view class="range-title">{{i18n.rangeTitle}}</view>
+      <view class="range-row">
+        <picker mode="date" value="{{rangeStart}}" bindchange="onRangeStartChange"><view class="picker">{{rangeStart}}</view></picker>
+        <text class="range-sep">-</text>
+        <picker mode="date" value="{{rangeEnd}}" bindchange="onRangeEndChange"><view class="picker">{{rangeEnd}}</view></picker>
+      </view>
+      <view class="button-row">
+        <button class="primary" style="background-color: {{accentColor}};" bindtap="onRangeApply">{{i18n.rangeApply}}</button>
+        <button class="plain" bindtap="onRangeReset">{{i18n.rangeReset}}</button>
+      </view>
+    </view>
+    <block wx:if="{{dataLocked}}">
+      <view class="locked">{{i18n.lockedMessage}}</view>
+    </block>
+    <block wx:elif="{{totalCount === 0}}">
+      <view class="empty">{{i18n.noDataTip}}</view>
+    </block>
+    <block wx:else>
+      <block wx:if="{{useEcharts}}">
+        <ec-canvas id="trendEC" canvas-id="trendEC" class="chart"></ec-canvas>
+        <ec-canvas id="pieEC" canvas-id="pieEC" class="chart"></ec-canvas>
+        <view class="hint">{{i18n.echartsHint}}</view>
+      </block>
+      <block wx:else>
+        <canvas canvas-id="trendCanvas" class="chart" bindtouchstart="onTrendTouchStart" bindtouchmove="onTrendTouchMove" bindtouchend="onTrendTouchEnd"></canvas>
+        <canvas canvas-id="pieCanvas" class="chart" bindtap="onPieTap"></canvas>
+        <view class="hint">{{i18n.canvasHint}}</view>
+      </block>
+    </block>
+  </view>
+
+  <view wx:if="{{!dataLocked && totalCount > 0}}" class="section summary">
+    <view class="label">{{i18n.summaryTitle}}</view>
+    <view class="summary-grid">
+      <view class="summary-item">{{summaryAverageLabel}}</view>
+      <view class="summary-item">{{summaryTopMoodLabel}}</view>
+      <view class="summary-item">{{summaryQuietLabel}}</view>
+    </view>
+    <button class="primary small" style="background-color: {{accentColor}};" bindtap="onCopySummary">{{i18n.copySummary}}</button>
+  </view>
+
+  <view wx:if="{{!dataLocked && totalCount > 0}}" class="section streak">
+    <view class="label">{{i18n.streakLabel}}</view>
+    <view class="value">{{streakDays}} {{i18n.streakUnit}}</view>
+  </view>
+
+  <view wx:if="{{!dataLocked && moodCounts.length > 0}}" class="section">
+    <view class="label">{{i18n.allDistribution}}</view>
+    <view class="grid">
+      <block wx:for="{{moodCounts}}" wx:key="mood">
+        <view class="cell" data-mood="{{item.mood}}" bindtap="onMoodCellTap">
+          <text class="emoji">{{item.mood}}</text>
+          <text class="count">{{item.count}}</text>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <view wx:if="{{!dataLocked && rangeMoodCounts.length > 0}}" class="section">
+    <view class="label">{{i18n.rangeDistribution}}</view>
+    <view class="grid">
+      <block wx:for="{{rangeMoodCounts}}" wx:key="mood">
+        <view class="cell" data-mood="{{item.mood}}" bindtap="onMoodCellTap">
+          <text class="emoji">{{item.mood}}</text>
+          <text class="count">{{item.count}}</text>
+        </view>
+      </block>
+    </view>
+  </view>
+</view>

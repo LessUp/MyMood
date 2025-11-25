@@ -1,0 +1,101 @@
+<view class="container {{theme === 'dark' ? 'theme-dark' : 'theme-light'}}" style="--accent-color: {{accentColor}};" bindtouchstart="onTouchStart" bindtouchend="onTouchEnd">
+  
+  <!-- Header -->
+  <view class="header card">
+    <view class="nav-btn" bindtap="onPrevMonth" aria-label="{{i18n.accessibilityPrevMonth}}">
+      <image class="icon" src="/assets/icons/arrow-left.svg"></image>
+    </view>
+    <picker mode="date" fields="month" value="{{ymValue}}" bindchange="onMonthPicked">
+      <view class="month-title">
+        <text>{{year}}年</text>
+        <text class="month-big">{{month}}月</text>
+      </view>
+    </picker>
+    <view class="nav-btn" bindtap="onNextMonth" aria-label="{{i18n.accessibilityNextMonth}}">
+      <image class="icon" src="/assets/icons/arrow-right.svg"></image>
+    </view>
+  </view>
+
+  <!-- Locked State -->
+  <block wx:if="{{dataLocked}}">
+    <view class="locked-card card">
+      <image class="locked-icon" src="/assets/icons/lock.svg"></image>
+      <view class="locked-title">{{i18n.lockedTitle}}</view>
+      <view class="locked-hint">{{i18n.lockedHint}}</view>
+      <button class="btn plain unlock-btn" bindtap="goSettings">{{i18n.unlock}}</button>
+    </view>
+  </block>
+
+  <!-- Calendar Grid -->
+  <view class="calendar-card card">
+    <view class="week-header">
+      <block wx:for="{{weekHeaders}}" wx:key="*this">
+        <text class="w-day">{{item}}</text>
+      </block>
+    </view>
+    <view class="days-grid {{dataLocked ? 'disabled' : ''}}">
+      <block wx:for="{{days}}" wx:key="dateKey">
+        <view class="day-cell {{item.inMonth ? '' : 'out'}} {{item.isToday ? 'today' : ''}} {{selectedDateKey === item.dateKey ? 'selected' : ''}}" 
+              style="{{item.bg ? 'background-color:' + item.bg + ';' : ''}}"
+              data-datekey="{{item.dateKey}}" 
+              data-inmonth="{{item.inMonth}}" 
+              bindtap="onDayTap" 
+              bindlongpress="onDayLongPress">
+          <text class="d-num">{{item.day}}</text>
+          <view wx:if="{{item.note}}" class="note-dot"></view>
+          <text wx:if="{{item.mood}}" class="mood-emoji">{{item.mood}}</text>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- Today FAB -->
+  <view class="fab-today" bindtap="onTodayTap">
+    <image src="/assets/icons/calendar.svg" class="fab-icon"></image>
+    <text>{{i18n.today}}</text>
+  </view>
+
+</view>
+
+<!-- Bottom Toolbar -->
+<view class="bottom-bar">
+  <view class="bar-item" bindtap="goStats">
+    <image src="/assets/icons/stats.svg" class="bar-icon"></image>
+    <text>{{i18n.stats}}</text>
+  </view>
+  <view class="bar-item center-action" bindtap="onTodayTap">
+    <image src="/assets/icons/plus.svg" class="bar-icon-lg"></image>
+  </view>
+  <view class="bar-item" bindtap="goSettings">
+    <image src="/assets/icons/settings.svg" class="bar-icon"></image>
+    <text>{{i18n.settings}}</text>
+  </view>
+</view>
+
+<!-- Mood Picker Modal -->
+<view class="mask {{pickerVisible ? 'show' : ''}}" bindtap="onMaskTap"></view>
+<view class="picker-sheet {{pickerVisible ? 'show' : ''}}">
+  <view class="picker-handle"></view>
+  <view class="picker-header">
+    <text class="picker-title">{{i18n.pickTitle}}</text>
+    <view class="picker-actions">
+      <view class="action-btn" bindtap="onClearMood" wx:if="{{selectedDayHasMood}}">
+        <text>{{i18n.clear}}</text>
+      </view>
+    </view>
+  </view>
+  
+  <scroll-view scroll-y class="emoji-scroll">
+    <view class="emoji-grid">
+      <block wx:for="{{emojiOptions}}" wx:key="*this">
+        <view class="emoji-item" hover-class="emoji-hover" data-mood="{{item}}" bindtap="onChooseEmoji">
+          {{item}}
+        </view>
+      </block>
+    </view>
+  </scroll-view>
+
+  <view class="picker-footer">
+    <button class="btn block-btn" bindtap="onGoDetailFromPicker">{{i18n.addNote}}</button>
+  </view>
+</view>
