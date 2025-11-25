@@ -18,7 +18,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@moodflow/types": "workspace:*"
+    "@moodflow/types": "*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

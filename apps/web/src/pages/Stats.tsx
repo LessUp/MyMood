@@ -2,15 +2,19 @@
  * 统计页面
  */
 
-import { useMemo } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
+import { useMemo, useState } from 'react';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { ChevronLeft, ChevronRight, TrendingUp, Calendar, Award, Smile } from 'lucide-react';
 import { useMoodStore } from '@/stores/mood';
 import { useSettingsStore } from '@/stores/settings';
 import { calculateDistribution, calculateStreak, calculateLongestStreak } from '@moodflow/core';
+import { MoodDistributionBar, YearHeatmap } from '@/components/StatsCard';
+import { cn } from '@/lib/utils';
 
 export function StatsPage() {
   const { records } = useMoodStore();
   const { settings } = useSettingsStore();
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   const stats = useMemo(() => {
     const distribution = calculateDistribution(records);
@@ -38,8 +42,33 @@ export function StatsPage() {
       });
     }
 
-    return { distribution, pieData, trendData, streak, longestStreak, total };
-  }, [records, settings.emojiColors]);
+    // 按月统计
+    const monthlyData: Array<{ month: string; count: number }> = [];
+    for (let m = 0; m < 12; m++) {
+      const monthKey = `${selectedYear}-${String(m + 1).padStart(2, '0')}`;
+      let count = 0;
+      for (const key in records) {
+        if (key.startsWith(monthKey)) count++;
+      }
+      monthlyData.push({
+        month: `${m + 1}月`,
+        count
+      });
+    }
+
+    // 年度热力图数据
+    const heatmapData: Record<string, { mood?: string; count: number }> = {};
+    for (const key in records) {
+      if (key.startsWith(String(selectedYear))) {
+        heatmapData[key] = { mood: records[key]?.mood, count: 1 };
+      }
+    }
+
+    // 本年记录数
+    const yearTotal = Object.keys(heatmapData).length;
+
+    return { distribution, pieData, trendData, streak, longestStreak, total, monthlyData, heatmapData, yearTotal };
+  }, [records, settings.emojiColors, selectedYear]);
 
   if (stats.total === 0) {
     return (
@@ -106,31 +135,68 @@ export function StatsPage() {
         </div>
       </div>
 
-      {/* 最近30天趋势 */}
+      {/* 年度热力图 */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4">
-        <h3 className="text-lg font-semibold mb-4">最近30天</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">年度记录</h3>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedYear(y => y - 1)}
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <span className="font-medium">{selectedYear}</span>
+            <button
+              onClick={() => setSelectedYear(y => y + 1)}
+              disabled={selectedYear >= new Date().getFullYear()}
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded disabled:opacity-30"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+        <p className="text-sm text-gray-500 mb-3">
+          {selectedYear}年共记录 <span className="font-bold text-primary-600">{stats.yearTotal}</span> 天
+        </p>
+        <YearHeatmap 
+          data={stats.heatmapData} 
+          year={selectedYear} 
+          colors={settings.emojiColors} 
+        />
+      </div>
+
+      {/* 月度统计 */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4">
+        <h3 className="text-lg font-semibold mb-4">月度统计</h3>
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={stats.trendData}>
-              <XAxis 
-                dataKey="date" 
-                tick={{ fontSize: 10 }}
-                interval="preserveStartEnd"
-              />
-              <YAxis hide domain={[0, 1]} />
+            <BarChart data={stats.monthlyData}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} />
               <Tooltip 
-                formatter={(value: number) => [value ? '有记录' : '无记录', '']}
+                formatter={(value: number) => [`${value} 天`, '记录']}
+                contentStyle={{ borderRadius: '8px' }}
               />
-              <Line
-                type="stepAfter"
-                dataKey="count"
-                stroke="var(--accent-color)"
-                strokeWidth={2}
-                dot={false}
+              <Bar 
+                dataKey="count" 
+                fill="var(--accent-color)" 
+                radius={[4, 4, 0, 0]}
               />
-            </LineChart>
+            </BarChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      {/* 心情分布条形图 */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4">
+        <h3 className="text-lg font-semibold mb-4">心情占比</h3>
+        <MoodDistributionBar
+          distribution={stats.distribution}
+          colors={settings.emojiColors}
+          total={stats.total}
+        />
       </div>
     </div>
   );

@@ -8,16 +8,16 @@
     "apps/*"
   ],
   "scripts": {
-    "dev:web": "pnpm --filter @moodflow/web dev",
-    "dev:api": "pnpm --filter @moodflow/api dev",
-    "build:web": "pnpm --filter @moodflow/web build",
-    "build:api": "pnpm --filter @moodflow/api build",
-    "build:core": "pnpm --filter @moodflow/core build",
-    "build:types": "pnpm --filter @moodflow/types build",
-    "build": "pnpm build:types && pnpm build:core && pnpm build:web && pnpm build:api",
+    "dev:web": "npm run dev -w @moodflow/web",
+    "dev:api": "npm run dev -w @moodflow/api",
+    "build:web": "npm run build -w @moodflow/web",
+    "build:api": "npm run build -w @moodflow/api",
+    "build:core": "npm run build -w @moodflow/core",
+    "build:types": "npm run build -w @moodflow/types",
+    "build": "npm run build:types && npm run build:core && npm run build:web && npm run build:api",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
-    "test": "pnpm -r test",
-    "clean": "pnpm -r exec rm -rf dist node_modules"
+    "test": "npm test --workspaces --if-present",
+    "clean": "rm -rf node_modules packages/*/node_modules apps/*/node_modules packages/*/dist apps/*/dist"
   },
   "devDependencies": {
     "typescript": "^5.3.0",
@@ -26,8 +26,6 @@
     "@typescript-eslint/parser": "^6.21.0"
   },
   "engines": {
-    "node": ">=18.0.0",
-    "pnpm": ">=8.0.0"
-  },
-  "packageManager": "pnpm@8.15.0"
+    "node": ">=18.0.0"
+  }
 }
