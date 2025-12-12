@@ -10,6 +10,7 @@
   "scripts": {
     "dev:web": "npm run dev -w @moodflow/web",
     "dev:api": "npm run dev -w @moodflow/api",
+    "build:deps": "npm run build:types && npm run build:core",
     "build:web": "npm run build -w @moodflow/web",
     "build:api": "npm run build -w @moodflow/api",
     "build:core": "npm run build -w @moodflow/core",
@@ -17,6 +18,7 @@
     "build": "npm run build:types && npm run build:core && npm run build:web && npm run build:api",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "test": "npm test --workspaces --if-present",
+    "postinstall": "npm run build:deps",
     "clean": "rm -rf node_modules packages/*/node_modules apps/*/node_modules packages/*/dist apps/*/dist"
   },
   "devDependencies": {
