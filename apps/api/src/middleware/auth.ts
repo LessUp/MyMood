@@ -5,6 +5,9 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { User, IUser } from '../models/User';
+import { JWT_SECRET } from '../config/jwt';
+import { fail } from '../lib/response';
+import { ErrorCodes } from '../lib/error-codes';
 
 export interface AuthRequest extends Request {
   user?: IUser;
@@ -20,23 +23,15 @@ export async function authenticate(
     const authHeader = req.headers.authorization;
     
     if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({
-        success: false,
-        error: { code: 'UNAUTHORIZED', message: '未提供认证令牌' }
-      });
+      return fail(res, 401, ErrorCodes.UNAUTHORIZED, '未提供认证令牌');
     }
     
     const token = authHeader.substring(7);
-    const secret = process.env.JWT_SECRET || 'secret';
-    
-    const decoded = jwt.verify(token, secret) as { userId: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
     
     const user = await User.findById(decoded.userId);
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        error: { code: 'USER_NOT_FOUND', message: '用户不存在' }
-      });
+      return fail(res, 401, ErrorCodes.USER_NOT_FOUND, '用户不存在');
     }
     
     req.user = user;
@@ -44,16 +39,10 @@ export async function authenticate(
     next();
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
-      return res.status(401).json({
-        success: false,
-        error: { code: 'TOKEN_EXPIRED', message: '令牌已过期' }
-      });
+      return fail(res, 401, ErrorCodes.TOKEN_EXPIRED, '令牌已过期');
     }
     
-    return res.status(401).json({
-      success: false,
-      error: { code: 'INVALID_TOKEN', message: '无效的认证令牌' }
-    });
+    return fail(res, 401, ErrorCodes.INVALID_TOKEN, '无效的认证令牌');
   }
 }
 
@@ -70,8 +59,7 @@ export async function optionalAuth(
     
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      const secret = process.env.JWT_SECRET || 'secret';
-      const decoded = jwt.verify(token, secret) as { userId: string };
+      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
       const user = await User.findById(decoded.userId);
       
       if (user) {

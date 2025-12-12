@@ -6,8 +6,16 @@ import { Router, Response } from 'express';
 import { z } from 'zod';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/asyncHandler';
-import { User } from '../models/User';
-import { hashPassword, verifyPassword } from '../services/auth';
+import { ok, fail } from '../lib/response';
+import { ErrorCodes } from '../lib/error-codes';
+import {
+  changePassword,
+  deleteAccount,
+  exportUserData,
+  getSettings,
+  updateProfile,
+  updateSettings
+} from '../services/user';
 
 export const userRouter = Router();
 
@@ -39,145 +47,50 @@ const changePasswordSchema = z.object({
  * PUT /api/user/profile - 更新用户资料
  */
 userRouter.put('/profile', asyncHandler(async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.userId!;
-    const data = updateProfileSchema.parse(req.body);
-    
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { $set: data },
-      { new: true }
-    );
-    
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: { code: 'NOT_FOUND', message: '用户不存在' }
-      });
-    }
-    
-    res.json({
-      success: true,
-      data: {
-        id: user._id,
-        username: user.username,
-        avatar: user.avatar
-      }
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: error.errors[0].message }
-      });
-    }
-    throw error;
-  }
+  const userId = req.userId!;
+  const data = updateProfileSchema.parse(req.body);
+
+  const profile = await updateProfile(userId, data);
+  if (!profile) return fail(res, 404, ErrorCodes.NOT_FOUND, '用户不存在');
+  return ok(res, profile);
 }));
 
 /**
  * PUT /api/user/settings - 更新用户设置
  */
 userRouter.put('/settings', asyncHandler(async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.userId!;
-    const data = updateSettingsSchema.parse(req.body);
-    
-    // 构建更新对象
-    const updateFields: Record<string, any> = {};
-    for (const [key, value] of Object.entries(data)) {
-      if (value !== undefined) {
-        updateFields[`settings.${key}`] = value;
-      }
-    }
-    
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { $set: updateFields },
-      { new: true }
-    );
-    
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: { code: 'NOT_FOUND', message: '用户不存在' }
-      });
-    }
-    
-    res.json({
-      success: true,
-      data: user.settings
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: error.errors[0].message }
-      });
-    }
-    throw error;
-  }
+  const userId = req.userId!;
+  const data = updateSettingsSchema.parse(req.body);
+
+  const settings = await updateSettings(userId, data);
+  if (!settings) return fail(res, 404, ErrorCodes.NOT_FOUND, '用户不存在');
+  return ok(res, settings);
 }));
 
 /**
  * GET /api/user/settings - 获取用户设置
  */
 userRouter.get('/settings', asyncHandler(async (req: AuthRequest, res: Response) => {
-  const user = req.user!;
-  
-  res.json({
-    success: true,
-    data: user.settings
-  });
+  const userId = req.userId!;
+  const settings = await getSettings(userId);
+  if (!settings) return fail(res, 404, ErrorCodes.NOT_FOUND, '用户不存在');
+  return ok(res, settings);
 }));
 
 /**
  * PUT /api/user/password - 修改密码
  */
 userRouter.put('/password', asyncHandler(async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.userId!;
-    const { oldPassword, newPassword } = changePasswordSchema.parse(req.body);
-    
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: { code: 'NOT_FOUND', message: '用户不存在' }
-      });
-    }
-    
-    if (!user.password) {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'NO_PASSWORD', message: '该账号未设置密码' }
-      });
-    }
-    
-    const valid = await verifyPassword(oldPassword, user.password);
-    if (!valid) {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'WRONG_PASSWORD', message: '原密码错误' }
-      });
-    }
-    
-    const hashedPassword = await hashPassword(newPassword);
-    await User.findByIdAndUpdate(userId, { password: hashedPassword });
-    
-    res.json({
-      success: true,
-      data: { message: '密码修改成功' }
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: error.errors[0].message }
-      });
-    }
-    throw error;
+  const userId = req.userId!;
+  const { oldPassword, newPassword } = changePasswordSchema.parse(req.body);
+
+  const result = await changePassword(userId, oldPassword, newPassword);
+  if (!result.ok) {
+    if (result.reason === 'NOT_FOUND') return fail(res, 404, ErrorCodes.NOT_FOUND, '用户不存在');
+    if (result.reason === 'NO_PASSWORD') return fail(res, 400, ErrorCodes.NO_PASSWORD, '该账号未设置密码');
+    if (result.reason === 'WRONG_PASSWORD') return fail(res, 400, ErrorCodes.WRONG_PASSWORD, '原密码错误');
   }
+  return ok(res, { message: '密码修改成功' });
 }));
 
 /**
@@ -185,19 +98,9 @@ userRouter.put('/password', asyncHandler(async (req: AuthRequest, res: Response)
  */
 userRouter.delete('/account', asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId!;
-  
-  // 删除用户所有数据
-  const { MoodRecord } = await import('../models/MoodRecord');
-  const { Backup } = await import('../models/Backup');
-  
-  await MoodRecord.deleteMany({ userId });
-  await Backup.deleteMany({ userId });
-  await User.findByIdAndDelete(userId);
-  
-  res.json({
-    success: true,
-    data: { message: '账号已删除' }
-  });
+
+  await deleteAccount(userId);
+  return ok(res, { message: '账号已删除' });
 }));
 
 /**
@@ -205,34 +108,8 @@ userRouter.delete('/account', asyncHandler(async (req: AuthRequest, res: Respons
  */
 userRouter.post('/export', asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId!;
-  const user = req.user!;
-  
-  const { MoodRecord } = await import('../models/MoodRecord');
-  const records = await MoodRecord.find({ userId });
-  
-  const moodData: Record<string, any> = {};
-  for (const record of records) {
-    moodData[record.dateKey] = {
-      mood: record.mood,
-      note: record.note,
-      ts: record.ts,
-      tags: record.tags
-    };
-  }
-  
-  const exportData = {
-    version: '2.0.0',
-    exportedAt: Date.now(),
-    user: {
-      username: user.username,
-      email: user.email
-    },
-    settings: user.settings,
-    records: moodData
-  };
-  
-  res.json({
-    success: true,
-    data: exportData
-  });
+
+  const data = await exportUserData(userId);
+  if (!data) return fail(res, 404, ErrorCodes.NOT_FOUND, '用户不存在');
+  return ok(res, data);
 }));

@@ -12,6 +12,7 @@ import {
   JWT_REFRESH_SECRET,
   JWT_SECRET
 } from '../config/jwt';
+import { env } from '../config/env';
 
 /**
  * 生成令牌对
@@ -118,8 +119,8 @@ export async function loginByWechat(
   wxCode: string
 ): Promise<{ user: IUser; tokens: AuthToken; isNew: boolean }> {
   // 调用微信 API 获取 openid
-  const wxAppId = process.env.WX_APP_ID;
-  const wxAppSecret = process.env.WX_APP_SECRET;
+  const wxAppId = env.WX_APP_ID;
+  const wxAppSecret = env.WX_APP_SECRET;
   
   if (!wxAppId || !wxAppSecret) {
     throw new Error('WECHAT_NOT_CONFIGURED');

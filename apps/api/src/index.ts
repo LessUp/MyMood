@@ -7,6 +7,8 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import mongoose from 'mongoose';
+import { env } from './config/env';
+import { openapi } from './openapi';
 
 import { authRouter } from './routes/auth';
 import { syncRouter } from './routes/sync';
@@ -15,12 +17,12 @@ import { userRouter } from './routes/user';
 import { errorHandler } from './middleware/error';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = env.PORT;
 
 // 中间件
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: env.CORS_ORIGIN || '*',
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -28,6 +30,11 @@ app.use(express.json({ limit: '10mb' }));
 // 健康检查
 app.get('/health', (_, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });
+});
+
+// OpenAPI 规范
+app.get('/openapi.json', (_req, res) => {
+  res.json(openapi);
 });
 
 // API 路由
@@ -42,8 +49,7 @@ app.use(errorHandler);
 // 连接数据库并启动服务
 async function start() {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/moodflow';
-    await mongoose.connect(mongoUri);
+    await mongoose.connect(env.MONGODB_URI);
     console.log('✅ MongoDB 连接成功');
     
     app.listen(PORT, () => {

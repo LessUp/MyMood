@@ -12,6 +12,7 @@ import {
 } from '../services/auth';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/asyncHandler';
+import { ok } from '../lib/response';
 
 export const authRouter = Router();
 
@@ -39,151 +40,63 @@ const refreshSchema = z.object({
  * POST /api/auth/register - 邮箱注册
  */
 authRouter.post('/register', asyncHandler(async (req, res: Response) => {
-  try {
-    const data = registerSchema.parse(req.body);
-    const { user, tokens } = await registerByEmail(data.email, data.password, data.username);
-    
-    res.status(201).json({
-      success: true,
-      data: {
-        user: {
-          id: user._id,
-          email: user.email,
-          username: user.username,
-          avatar: user.avatar
-        },
-        tokens
-      }
-    });
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: error.errors[0].message }
-      });
-    }
-    
-    if (error.message === 'EMAIL_EXISTS') {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'EMAIL_EXISTS', message: '该邮箱已被注册' }
-      });
-    }
-    
-    throw error;
-  }
+  const data = registerSchema.parse(req.body);
+  const { user, tokens } = await registerByEmail(data.email, data.password, data.username);
+
+  return ok(res, {
+    user: {
+      id: user._id,
+      email: user.email,
+      username: user.username,
+      avatar: user.avatar
+    },
+    tokens
+  }, 201);
 }));
 
 /**
  * POST /api/auth/login - 邮箱登录
  */
 authRouter.post('/login', asyncHandler(async (req, res: Response) => {
-  try {
-    const data = loginSchema.parse(req.body);
-    const { user, tokens } = await loginByEmail(data.email, data.password);
-    
-    res.json({
-      success: true,
-      data: {
-        user: {
-          id: user._id,
-          email: user.email,
-          username: user.username,
-          avatar: user.avatar
-        },
-        tokens
-      }
-    });
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: error.errors[0].message }
-      });
-    }
-    
-    if (error.message === 'INVALID_CREDENTIALS') {
-      return res.status(401).json({
-        success: false,
-        error: { code: 'INVALID_CREDENTIALS', message: '邮箱或密码错误' }
-      });
-    }
-    
-    throw error;
-  }
+  const data = loginSchema.parse(req.body);
+  const { user, tokens } = await loginByEmail(data.email, data.password);
+
+  return ok(res, {
+    user: {
+      id: user._id,
+      email: user.email,
+      username: user.username,
+      avatar: user.avatar
+    },
+    tokens
+  });
 }));
 
 /**
  * POST /api/auth/wechat - 微信登录
  */
 authRouter.post('/wechat', asyncHandler(async (req, res: Response) => {
-  try {
-    const data = wxLoginSchema.parse(req.body);
-    const { user, tokens, isNew } = await loginByWechat(data.code);
-    
-    res.json({
-      success: true,
-      data: {
-        user: {
-          id: user._id,
-          username: user.username,
-          avatar: user.avatar
-        },
-        tokens,
-        isNew
-      }
-    });
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: error.errors[0].message }
-      });
-    }
-    
-    if (error.message === 'WECHAT_NOT_CONFIGURED') {
-      return res.status(500).json({
-        success: false,
-        error: { code: 'WECHAT_NOT_CONFIGURED', message: '微信登录未配置' }
-      });
-    }
-    
-    if (error.message === 'WECHAT_AUTH_FAILED') {
-      return res.status(401).json({
-        success: false,
-        error: { code: 'WECHAT_AUTH_FAILED', message: '微信认证失败' }
-      });
-    }
-    
-    throw error;
-  }
+  const data = wxLoginSchema.parse(req.body);
+  const { user, tokens, isNew } = await loginByWechat(data.code);
+
+  return ok(res, {
+    user: {
+      id: user._id,
+      username: user.username,
+      avatar: user.avatar
+    },
+    tokens,
+    isNew
+  });
 }));
 
 /**
  * POST /api/auth/refresh - 刷新令牌
  */
 authRouter.post('/refresh', asyncHandler(async (req, res: Response) => {
-  try {
-    const data = refreshSchema.parse(req.body);
-    const tokens = refreshTokens(data.refreshToken);
-    
-    res.json({
-      success: true,
-      data: { tokens }
-    });
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        success: false,
-        error: { code: 'VALIDATION_ERROR', message: error.errors[0].message }
-      });
-    }
-    
-    return res.status(401).json({
-      success: false,
-      error: { code: 'INVALID_REFRESH_TOKEN', message: '无效的刷新令牌' }
-    });
-  }
+  const data = refreshSchema.parse(req.body);
+  const tokens = refreshTokens(data.refreshToken);
+  return ok(res, { tokens });
 }));
 
 /**
@@ -191,19 +104,16 @@ authRouter.post('/refresh', asyncHandler(async (req, res: Response) => {
  */
 authRouter.get('/me', authenticate, (req: AuthRequest, res: Response) => {
   const user = req.user!;
-  
-  res.json({
-    success: true,
-    data: {
-      id: user._id,
-      email: user.email,
-      phone: user.phone,
-      username: user.username,
-      avatar: user.avatar,
-      settings: user.settings,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt
-    }
+
+  return ok(res, {
+    id: user._id,
+    email: user.email,
+    phone: user.phone,
+    username: user.username,
+    avatar: user.avatar,
+    settings: user.settings,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt
   });
 });
 
@@ -212,8 +122,5 @@ authRouter.get('/me', authenticate, (req: AuthRequest, res: Response) => {
  */
 authRouter.post('/logout', authenticate, (_req, res: Response) => {
   // 实际登出逻辑可以在这里添加令牌黑名单
-  res.json({
-    success: true,
-    data: { message: '已登出' }
-  });
+  return ok(res, { message: '已登出' });
 });
