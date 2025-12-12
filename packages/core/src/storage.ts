@@ -87,7 +87,7 @@ export class StorageManager {
       };
     } else if (all[dateKey]) {
       if (all[dateKey].note) {
-        delete all[dateKey].mood;
+        delete (all[dateKey] as Partial<MoodEntry>).mood;
         all[dateKey].ts = Date.now();
       } else {
         delete all[dateKey];
@@ -112,7 +112,7 @@ export class StorageManager {
       };
     } else if (all[dateKey]) {
       if (all[dateKey].mood) {
-        delete all[dateKey].note;
+        delete (all[dateKey] as Partial<MoodEntry>).note;
         all[dateKey].ts = Date.now();
       } else {
         delete all[dateKey];
@@ -219,7 +219,8 @@ export class StorageManager {
       return { imported: Object.keys(entries).length };
     }
     
-    return this.mergeEntries(entries);
+    const { updated } = await this.mergeEntries(entries);
+    return { imported: updated };
   }
 
   /**

@@ -7,7 +7,7 @@
 /** 心情记录条目 */
 export interface MoodEntry {
   /** 心情表情符号 */
-  mood: string;
+  mood?: string;
   /** 备注文本 */
   note?: string;
   /** 时间戳（毫秒），用于冲突解决 */
